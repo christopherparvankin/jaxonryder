@@ -5,13 +5,15 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'PTA Website - Fate & Fries',
-  description: 'A cinematic experience about choice, destiny, and nacho fries',
+  title: 'PTA Website - Fate',
+  description: 'A cinematic experience about choice and destiny',
 }
 
 export const viewport = {
   width: 'device-width',
   initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 }
 
 export default function RootLayout({

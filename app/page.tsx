@@ -6,9 +6,9 @@ import Image from 'next/image'
 const textChunks = [
   "A man stands before the mirror. His own eyes search him, and in the silence he asks, who do I wish to become?",
   "Before him, a road forks. One path carries light, trembling and fragile; the other, shadowed, wet with regret. Choose wrongly, and he will learn—all that awaits is grief's unyielding hand, a harvest of pain, and a garden of loss.",
-  "But in this moment of choice, a scent drifts through the air... golden, crispy, irresistible. Nacho fries call to him from the shadows.",
+  "As he hesitates, his heart calls softly from the dark.",
   "This man is no stranger, for this man is you.",
-  "And in your trembling hands lies the weight of your becoming—and the fate of nacho fries everywhere.",
+  "And in your trembling hands lies the weight of your becoming.",
   "What choice shall you make?"
 ]
 
@@ -79,23 +79,27 @@ export default function Home() {
         
         if (chunkIndex >= textChunks.length) {
           clearInterval(interval)
-          // Show image after text sequence completes
-          setTimeout(() => {
-            setIsVisible(false)
-            setTimeout(() => {
-              setShowImage(true)
-              setTimeout(() => {
-                setImageVisible(true)
-              }, 100) // Small delay to ensure image is rendered before fading in
-            }, 1000) // Wait for final fade out
-          }, 3000) // Wait only 3 seconds after last text chunk
         }
       }, 7000) // Show each chunk for 7 seconds (5s visible + 2s transition)
 
       return () => clearInterval(interval)
     }, 1000) // Start text sequence 1 second after page load
 
-    return () => clearTimeout(textTimer)
+    // Show images exactly 32.3 seconds after button click
+    const imageTimer = setTimeout(() => {
+      setIsVisible(false) // Hide any remaining text
+      setTimeout(() => {
+        setShowImage(true)
+        setTimeout(() => {
+          setImageVisible(true)
+        }, 100) // Small delay to ensure image is rendered before fading in
+      }, 1000) // Wait for text fade out
+    }, 32300) // 32.3 seconds after button click
+
+    return () => {
+      clearTimeout(textTimer)
+      clearTimeout(imageTimer)
+    }
   }
 
   return (
@@ -133,15 +137,33 @@ export default function Home() {
               WebkitTapHighlightColor: 'transparent'
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = '#ffffff'
-              e.currentTarget.style.color = '#000000'
+              if (!isMobile) {
+                e.currentTarget.style.backgroundColor = '#ffffff'
+                e.currentTarget.style.color = '#000000'
+              }
             }}
             onMouseOut={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent'
-              e.currentTarget.style.color = '#ffffff'
+              if (!isMobile) {
+                e.currentTarget.style.backgroundColor = 'transparent'
+                e.currentTarget.style.color = '#ffffff'
+              }
+            }}
+            onTouchStart={(e) => {
+              if (isMobile) {
+                e.currentTarget.style.backgroundColor = '#ffffff'
+                e.currentTarget.style.color = '#000000'
+              }
+            }}
+            onTouchEnd={(e) => {
+              if (isMobile) {
+                setTimeout(() => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                  e.currentTarget.style.color = '#ffffff'
+                }, 150)
+              }
             }}
           >
-            Press for Fate & Fries
+            Press for Fate
           </button>
         </div>
       ) : !showImage ? (
@@ -186,13 +208,26 @@ export default function Home() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: isMobile ? '15px' : '20px'
+            padding: isMobile ? '15px' : '20px',
+            flexDirection: 'column',
+            gap: isMobile ? '20px' : '30px'
           }}>
           <Image
-            src="/screenshot.png"
-            alt="Final Image"
-            width={isMobile ? 400 : 800}
-            height={isMobile ? 300 : 600}
+            src="/seaweeds.png"
+            alt="Seaweeds"
+            width={isMobile ? 300 : 500}
+            height={isMobile ? 200 : 350}
+            style={{ 
+              maxWidth: '100%', 
+              height: 'auto',
+              borderRadius: isMobile ? '8px' : '0'
+            }}
+          />
+          <Image
+            src="/7:30.png"
+            alt="7:30"
+            width={isMobile ? 300 : 500}
+            height={isMobile ? 200 : 350}
             style={{ 
               maxWidth: '100%', 
               height: 'auto',
