@@ -3,13 +3,20 @@
 import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 
-const textChunks = [
-  "A man stands before the mirror. His own eyes search him, and in the silence he asks, who do I wish to become?",
-  "Before him, a road forks. One path carries light, trembling and fragile; the other, shadowed, wet with regret. Choose wrongly, and he will learn—all that awaits is grief's unyielding hand, a harvest of pain, and a garden of loss.",
-  "As he hesitates, his heart calls softly from the dark.",
-  "This man is no stranger, for this man is you.",
-  "And in your trembling hands lies the weight of your becoming.",
-  "What choice shall you make?"
+interface TextChunk {
+  text: string;
+  duration: number; // in milliseconds
+}
+
+const textChunks: TextChunk[] = [
+  { text: "hey baby", duration: 3000 },
+  { text: "hope you slept well ha ha", duration: 3000 },
+  { text: "anyway", duration: 3000 },
+  { text: "i know we've been going steady for quite a while now", duration: 3000 },
+  { text: "and you know u mean everything to me", duration: 3000 },
+  { text: "and i can't hold it in anymore", duration: 3000 },
+  { text: "baby i have a question...", duration: 3000 },
+  { text: "would u make me the happiest bug in the world", duration: 10000 }
 ]
 
 export default function Home() {
@@ -35,10 +42,10 @@ export default function Home() {
   const startExperience = async () => {
     setHasStarted(true)
     
-    // Try to play audio starting at 41 seconds with fade in
+    // Try to play audio starting at 0 seconds with fade in
     if (audioRef.current) {
       try {
-        audioRef.current.currentTime = 41 // Start at 41 seconds
+        audioRef.current.currentTime = 0 // Start at 0 seconds
         audioRef.current.volume = 0 // Start with no volume
         await audioRef.current.play()
         
@@ -59,30 +66,42 @@ export default function Home() {
     // Start text sequence after a brief delay
     const textTimer = setTimeout(() => {
       // Show first chunk with fade in
+      console.log('Starting first chunk:', textChunks[0].text)
       setCurrentChunk(0)
       setTimeout(() => {
         setIsVisible(true)
       }, 100) // Small delay to ensure the element is rendered before fading in
       
-      let chunkIndex = 1
-      const interval = setInterval(() => {
-        // Fade out current text
-        setIsVisible(false)
+      let currentIndex = 0
+      
+      const showNextChunk = () => {
+        currentIndex++
+        console.log('showNextChunk called, currentIndex:', currentIndex)
         
-        // After fade out, change text and fade in
-        setTimeout(() => {
-          setCurrentChunk(chunkIndex)
-          setIsVisible(true)
-        }, 1000) // Wait for fade out to complete
-        
-        chunkIndex++
-        
-        if (chunkIndex >= textChunks.length) {
-          clearInterval(interval)
+        if (currentIndex < textChunks.length) {
+          // Fade out current text
+          setIsVisible(false)
+          
+          // After fade out, change text and fade in
+          setTimeout(() => {
+            console.log('Setting chunk to:', currentIndex, 'text:', textChunks[currentIndex]?.text)
+            setCurrentChunk(currentIndex)
+            setIsVisible(true)
+            
+            // Schedule next chunk after current chunk's duration
+            const nextTimeout = textChunks[currentIndex].duration
+            console.log('Next chunk will show in:', nextTimeout, 'ms')
+            setTimeout(showNextChunk, nextTimeout)
+          }, 1000) // Wait for fade out to complete
         }
-      }, 7000) // Show each chunk for 7 seconds (5s visible + 2s transition)
+      }
+      
+      // Start the sequence after the first chunk's duration
+      setTimeout(showNextChunk, textChunks[0].duration)
 
-      return () => clearInterval(interval)
+      return () => {
+        // Cleanup is handled by the component unmounting
+      }
     }, 1000) // Start text sequence 1 second after page load
 
     // Show images exactly 32.3 seconds after button click
@@ -114,7 +133,7 @@ export default function Home() {
       {/* Hidden audio element */}
       <audio 
         ref={audioRef} 
-        src="/audio.mp3" 
+        src="/Lil Wayne - How To Love (Lyrics).mp3" 
         loop={false}
         preload="auto"
       />
@@ -124,8 +143,8 @@ export default function Home() {
           <button
             onClick={startExperience}
             style={{
-              backgroundColor: 'transparent',
-              color: '#ffffff',
+              backgroundColor: '#ffffff',
+              color: '#000000',
               border: '2px solid #ffffff',
               padding: isMobile ? '15px 30px' : '20px 40px',
               fontSize: isMobile ? '1.2rem' : '1.5rem',
@@ -138,32 +157,28 @@ export default function Home() {
             }}
             onMouseOver={(e) => {
               if (!isMobile) {
-                e.currentTarget.style.backgroundColor = '#ffffff'
-                e.currentTarget.style.color = '#000000'
+                e.currentTarget.style.transform = 'scale(1.1)'
               }
             }}
             onMouseOut={(e) => {
               if (!isMobile) {
-                e.currentTarget.style.backgroundColor = 'transparent'
-                e.currentTarget.style.color = '#ffffff'
+                e.currentTarget.style.transform = 'scale(1)'
               }
             }}
             onTouchStart={(e) => {
               if (isMobile) {
-                e.currentTarget.style.backgroundColor = '#ffffff'
-                e.currentTarget.style.color = '#000000'
+                e.currentTarget.style.transform = 'scale(1.1)'
               }
             }}
             onTouchEnd={(e) => {
               if (isMobile) {
                 setTimeout(() => {
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                  e.currentTarget.style.color = '#ffffff'
+                  e.currentTarget.style.transform = 'scale(1)'
                 }, 150)
               }
             }}
           >
-            Press for Fate
+            Press on me its important
           </button>
         </div>
       ) : !showImage ? (
@@ -183,7 +198,7 @@ export default function Home() {
                 fontSize: isMobile ? '1.3rem' : '2rem',
                 lineHeight: isMobile ? '1.5' : '1.6',
                 textAlign: 'center',
-                fontFamily: 'Arial, Helvetica, sans-serif',
+                fontFamily: 'Papyrus, fantasy',
                 maxWidth: isMobile ? '100%' : '1000px',
                 width: '100%',
                 margin: '0',
@@ -195,45 +210,83 @@ export default function Home() {
                 wordBreak: 'normal'
               }}
             >
-              {textChunks[currentChunk]}
+              {textChunks[currentChunk]?.text}
             </p>
           )}
         </div>
       ) : (
-        <div 
+        <div
           key={showImage ? 'image-visible' : 'image-hidden'}
           style={{
             opacity: imageVisible ? 1 : 0,
-            transition: 'opacity 0.5s ease-in-out',
+            transition: 'opacity 3s ease-in-out',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             padding: isMobile ? '15px' : '20px',
             flexDirection: 'column',
-            gap: isMobile ? '20px' : '30px'
+            width: '100%',
+            height: '100%',
           }}>
-          <Image
-            src="/seaweeds.png"
-            alt="Seaweeds"
-            width={isMobile ? 300 : 500}
-            height={isMobile ? 200 : 350}
-            style={{ 
-              maxWidth: '100%', 
-              height: 'auto',
-              borderRadius: isMobile ? '8px' : '0'
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+              gridTemplateRows: isMobile ? 'repeat(4, auto)' : '1fr 1fr',
+              gap: isMobile ? '18px' : '26px',
+              width: isMobile ? '100%' : 'auto',
+              maxWidth: isMobile ? '370px' : '1100px',
             }}
-          />
-          <Image
-            src="/7:30.png"
-            alt="7:30"
-            width={isMobile ? 300 : 500}
-            height={isMobile ? 200 : 350}
-            style={{ 
-              maxWidth: '100%', 
-              height: 'auto',
-              borderRadius: isMobile ? '8px' : '0'
-            }}
-          />
+          >
+            <Image
+              src="/chris.png"
+              alt="Seaweeds"
+              width={isMobile ? 160 : 350}
+              height={isMobile ? 120 : 180}
+              style={{
+                maxWidth: '100%',
+                height: 'auto',
+                borderRadius: isMobile ? '8px' : '0',
+                justifySelf: 'center'
+              }}
+            />
+            <Image
+              src="/lunch.png"
+              alt="Seaweeds"
+              width={isMobile ? 160 : 350}
+              height={isMobile ? 120 : 180}
+              style={{
+                maxWidth: '100%',
+                height: 'auto',
+                borderRadius: isMobile ? '8px' : '0',
+                justifySelf: 'center'
+              }}
+            />
+            <Image
+              src="/date.png"
+              alt="Seaweeds"
+              width={isMobile ? 160 : 350}
+              height={isMobile ? 120 : 180}
+              style={{
+                maxWidth: '100%',
+                height: 'auto',
+                borderRadius: isMobile ? '8px' : '0',
+                justifySelf: 'center'
+              }}
+            />
+            <Image
+              src="/clock.png"
+              alt="7:30"
+              width={isMobile ? 160 : 350}
+              height={isMobile ? 120 : 180}
+              style={{
+                maxWidth: '100%',
+                height: 'auto',
+                borderRadius: isMobile ? '8px' : '0',
+                justifySelf: 'center'
+              }}
+            />
+          </div>
         </div>
       )}
     </main>
