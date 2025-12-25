@@ -9,22 +9,19 @@ interface TextChunk {
 }
 
 const textChunks: TextChunk[] = [
-  { text: "hey baby", duration: 3000 },
-  { text: "hope you slept well ha ha", duration: 3000 },
-  { text: "anyway", duration: 3000 },
-  { text: "i know we've been going steady for quite a while now", duration: 3000 },
-  { text: "and you know u mean everything to me", duration: 3000 },
-  { text: "and i can't hold it in anymore", duration: 3000 },
-  { text: "baby i have a question...", duration: 3000 },
-  { text: "would u make me the happiest bug in the world", duration: 10000 }
+  { text: "hi stinky", duration: 5000 },
+  { text: "hope you slept well", duration: 5000 },
+  { text: "heard it was somebody's birthday today", duration: 5000 },
+  { text: "jesusssssss #pray", duration: 5000 },
+  { text: "but anyway, i wanted to tell you something...", duration: 4000 },
 ]
 
 export default function Home() {
   const [currentChunk, setCurrentChunk] = useState(-1)
-  const [showImage, setShowImage] = useState(false)
   const [hasStarted, setHasStarted] = useState(false)
   const [isVisible, setIsVisible] = useState(false)
-  const [imageVisible, setImageVisible] = useState(false)
+  const [showChristmasMessage, setShowChristmasMessage] = useState(false)
+  const [christmasMessageVisible, setChristmasMessageVisible] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null)
 
@@ -45,22 +42,48 @@ export default function Home() {
     // Try to play audio starting at 0 seconds with fade in
     if (audioRef.current) {
       try {
+        console.log('Starting audio playback...')
+        console.log('Audio src:', audioRef.current.src)
+        console.log('Audio readyState:', audioRef.current.readyState)
+        
+        // Set volume to audible level immediately
+        audioRef.current.volume = 0.3
         audioRef.current.currentTime = 0 // Start at 0 seconds
-        audioRef.current.volume = 0 // Start with no volume
-        await audioRef.current.play()
+        
+        // Try to play
+        const playPromise = audioRef.current.play()
+        
+        if (playPromise !== undefined) {
+          await playPromise
+          console.log('Audio started playing successfully')
+          console.log('Audio volume:', audioRef.current.volume)
+          console.log('Audio paused:', audioRef.current.paused)
+        }
         
         // Fade in the volume over 3 seconds
         const fadeInInterval = setInterval(() => {
           if (audioRef.current && audioRef.current.volume < 1) {
-            audioRef.current.volume = Math.min(audioRef.current.volume + 0.05, 1)
+            audioRef.current.volume = Math.min(audioRef.current.volume + 0.02, 1)
           } else {
             clearInterval(fadeInInterval)
+            console.log('Audio fade-in complete, final volume:', audioRef.current?.volume)
           }
-        }, 150) // Adjust volume every 150ms for smooth fade
+        }, 100) // Adjust volume every 100ms for smooth fade
       } catch (error) {
-        console.log('Audio autoplay blocked:', error)
-        // Audio will play on user interaction
+        console.error('Audio playback error:', error)
+        // Try to play again with user interaction
+        if (audioRef.current) {
+          try {
+            audioRef.current.volume = 1
+            await audioRef.current.play()
+            console.log('Audio started on retry')
+          } catch (retryError) {
+            console.error('Audio retry failed:', retryError)
+          }
+        }
       }
+    } else {
+      console.error('Audio ref is null')
     }
 
     // Start text sequence after a brief delay
@@ -91,33 +114,44 @@ export default function Home() {
             // Schedule next chunk after current chunk's duration
             const nextTimeout = textChunks[currentIndex].duration
             console.log('Next chunk will show in:', nextTimeout, 'ms')
-            setTimeout(showNextChunk, nextTimeout)
+            
+            // If this is the last chunk, fade it out after its duration and show Christmas message
+            if (currentIndex === textChunks.length - 1) {
+              setTimeout(() => {
+                console.log('Last chunk duration complete, fading out')
+                setIsVisible(false)
+                // Show Christmas message after fade out completes
+                setTimeout(() => {
+                  setShowChristmasMessage(true)
+                  setTimeout(() => {
+                    setChristmasMessageVisible(true)
+                  }, 100) // Small delay to ensure element is rendered before fading in
+                }, 1000) // Wait for fade out to complete
+              }, nextTimeout)
+            } else {
+              setTimeout(showNextChunk, nextTimeout)
+            }
+          }, 1000) // Wait for fade out to complete
+        } else {
+          // This is the last chunk - fade it out after its duration
+          console.log('Last chunk reached, fading out')
+          setIsVisible(false)
+          // Show Christmas message after fade out completes
+          setTimeout(() => {
+            setShowChristmasMessage(true)
+            setTimeout(() => {
+              setChristmasMessageVisible(true)
+            }, 100) // Small delay to ensure element is rendered before fading in
           }, 1000) // Wait for fade out to complete
         }
       }
       
       // Start the sequence after the first chunk's duration
       setTimeout(showNextChunk, textChunks[0].duration)
-
-      return () => {
-        // Cleanup is handled by the component unmounting
-      }
-    }, 1000) // Start text sequence 1 second after page load
-
-    // Show images exactly 32.3 seconds after button click
-    const imageTimer = setTimeout(() => {
-      setIsVisible(false) // Hide any remaining text
-      setTimeout(() => {
-        setShowImage(true)
-        setTimeout(() => {
-          setImageVisible(true)
-        }, 100) // Small delay to ensure image is rendered before fading in
-      }, 1000) // Wait for text fade out
-    }, 32300) // 32.3 seconds after button click
+    }, 2000) // Start text sequence 3 seconds after button click
 
     return () => {
       clearTimeout(textTimer)
-      clearTimeout(imageTimer)
     }
   }
 
@@ -133,9 +167,18 @@ export default function Home() {
       {/* Hidden audio element */}
       <audio 
         ref={audioRef} 
-        src="/Lil Wayne - How To Love (Lyrics).mp3" 
+        src="/song.mp3" 
         loop={false}
         preload="auto"
+        onError={(e) => {
+          console.error('Audio loading error:', e)
+        }}
+        onLoadedData={() => {
+          console.log('Audio loaded successfully')
+        }}
+        onCanPlay={() => {
+          console.log('Audio can play')
+        }}
       />
       
       {!hasStarted ? (
@@ -178,10 +221,125 @@ export default function Home() {
               }
             }}
           >
-            Press on me its important
+            Click on me 
           </button>
         </div>
-      ) : !showImage ? (
+      ) : showChristmasMessage ? (
+        <div style={{ 
+          position: 'relative',
+          height: '100vh', 
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: isMobile ? '15px' : '20px',
+          overflow: 'hidden'
+        }}>
+          {/* Confetti particles */}
+          {[...Array(50)].map((_, i) => (
+            <div
+              key={`confetti-${i}`}
+              style={{
+                position: 'absolute',
+                width: '10px',
+                height: '10px',
+                backgroundColor: ['#ff0000', '#00ff00', '#ffff00', '#ff00ff', '#00ffff'][i % 5],
+                left: `${(i * 20) % 100}%`,
+                top: '-10px',
+                opacity: christmasMessageVisible ? 1 : 0,
+                animation: `confettiFall ${3 + (i % 3)}s linear infinite`,
+                animationDelay: `${i * 0.1}s`,
+                zIndex: 1
+              }}
+            />
+          ))}
+          
+          {/* Floating images */}
+          <Image
+            src="/tree.png"
+            alt="Tree"
+            width={isMobile ? 80 : 120}
+            height={isMobile ? 80 : 120}
+            style={{
+              position: 'absolute',
+              opacity: christmasMessageVisible ? 0.6 : 0,
+              transition: 'opacity 1s ease-in-out',
+              animation: 'float1 8s ease-in-out infinite',
+              zIndex: 1,
+              top: '10%',
+              left: '5%'
+            }}
+          />
+          <Image
+            src="/minion.png"
+            alt="Minion"
+            width={isMobile ? 80 : 120}
+            height={isMobile ? 80 : 120}
+            style={{
+              position: 'absolute',
+              opacity: christmasMessageVisible ? 0.6 : 0,
+              transition: 'opacity 1s ease-in-out',
+              animation: 'float2 10s ease-in-out infinite',
+              zIndex: 1,
+              top: '20%',
+              right: '10%'
+            }}
+          />
+          <Image
+            src="/hcr.png"
+            alt="HCR"
+            width={isMobile ? 80 : 120}
+            height={isMobile ? 80 : 120}
+            style={{
+              position: 'absolute',
+              opacity: christmasMessageVisible ? 0.6 : 0,
+              transition: 'opacity 1s ease-in-out',
+              animation: 'float3 12s ease-in-out infinite',
+              zIndex: 1,
+              bottom: '15%',
+              left: '8%'
+            }}
+          />
+          <Image
+            src="/hph.png"
+            alt="HPH"
+            width={isMobile ? 80 : 120}
+            height={isMobile ? 80 : 120}
+            style={{
+              position: 'absolute',
+              opacity: christmasMessageVisible ? 0.6 : 0,
+              transition: 'opacity 1s ease-in-out',
+              animation: 'float4 9s ease-in-out infinite',
+              zIndex: 1,
+              bottom: '25%',
+              right: '5%'
+            }}
+          />
+          
+          {/* Christmas message text */}
+          <h1
+            style={{
+              background: 'linear-gradient(90deg, #ff0000 0%, #00ff00 50%, #ff0000 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              fontSize: isMobile ? '2.5rem' : '4rem',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              fontFamily: 'Arial, Helvetica, sans-serif',
+              margin: '0',
+              padding: '0',
+              opacity: christmasMessageVisible ? 1 : 0,
+              transition: 'opacity 1s ease-in-out',
+              textShadow: '0 0 20px rgba(255, 0, 0, 0.5), 0 0 20px rgba(0, 255, 0, 0.5)',
+              position: 'relative',
+              zIndex: 10
+            }}
+          >
+            HAPPY CHRISTMAS MY LOVE!!!
+          </h1>
+        </div>
+      ) : (
         <div style={{ 
           position: 'relative',
           height: '100vh', 
@@ -213,80 +371,6 @@ export default function Home() {
               {textChunks[currentChunk]?.text}
             </p>
           )}
-        </div>
-      ) : (
-        <div
-          key={showImage ? 'image-visible' : 'image-hidden'}
-          style={{
-            opacity: imageVisible ? 1 : 0,
-            transition: 'opacity 3s ease-in-out',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: isMobile ? '15px' : '20px',
-            flexDirection: 'column',
-            width: '100%',
-            height: '100%',
-          }}>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-              gridTemplateRows: isMobile ? 'repeat(4, auto)' : '1fr 1fr',
-              gap: isMobile ? '18px' : '26px',
-              width: isMobile ? '100%' : 'auto',
-              maxWidth: isMobile ? '370px' : '1100px',
-            }}
-          >
-            <Image
-              src="/chris.png"
-              alt="Seaweeds"
-              width={isMobile ? 160 : 350}
-              height={isMobile ? 120 : 180}
-              style={{
-                maxWidth: '100%',
-                height: 'auto',
-                borderRadius: isMobile ? '8px' : '0',
-                justifySelf: 'center'
-              }}
-            />
-            <Image
-              src="/lunch.png"
-              alt="Seaweeds"
-              width={isMobile ? 160 : 350}
-              height={isMobile ? 120 : 180}
-              style={{
-                maxWidth: '100%',
-                height: 'auto',
-                borderRadius: isMobile ? '8px' : '0',
-                justifySelf: 'center'
-              }}
-            />
-            <Image
-              src="/date.png"
-              alt="Seaweeds"
-              width={isMobile ? 160 : 350}
-              height={isMobile ? 120 : 180}
-              style={{
-                maxWidth: '100%',
-                height: 'auto',
-                borderRadius: isMobile ? '8px' : '0',
-                justifySelf: 'center'
-              }}
-            />
-            <Image
-              src="/clock.png"
-              alt="7:30"
-              width={isMobile ? 160 : 350}
-              height={isMobile ? 120 : 180}
-              style={{
-                maxWidth: '100%',
-                height: 'auto',
-                borderRadius: isMobile ? '8px' : '0',
-                justifySelf: 'center'
-              }}
-            />
-          </div>
         </div>
       )}
     </main>
